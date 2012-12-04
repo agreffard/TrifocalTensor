@@ -50,6 +50,49 @@ int main(int argc, char *argv[])
   kn::loadMatrix(list2,"input/list2.list");
   kn::loadMatrix(list3,"input/list3.list");
 
+
+
+
+
+ /********************************************************************
+
+  First step : find the tensor from the three lists
+
+  *********************************************************************/
+
+
+ Eigen::MatrixXd A(28, 27);
+
+ // initialisation of A
+ for (int i=0; i<28; ++i)
+    for(int j=0; j<27; ++j)
+      A(i,j) = 0;
+
+
+  // filling A
+  for (int p=0; p<7; ++p) {
+    for (int i=0; i<2; ++i) {
+      for (int l=0; l<2; ++l) {
+        for (int k=0; k<3; ++k) {
+          A(4*p + 2*i + l, 3*2 + 3*l + k) = list1(p, k) * list2(p, i) * list3(p, 2);
+          A(4*p + 2*i + l, 3*i + 3*l + k) = - list1(p, k) * list2(p, 2) * list3(p, 2);
+          A(4*p + 2*i + l, 3*2 + 3*2 + k) = - list1(p, k) * list2(p, i) * list3(p, l);
+          A(4*p + 2*i + l, 3*i + 3*2 + k) = list1(p, k) * list2(p, 2) * list3(p, l);
+        }
+      }
+    }
+  }
+
+  std::cout << A << std::endl;
+
+
+
+
+
+
+/*
+
+
   // save a list
   kn::saveMatrix(list1,"/tmp/myList.mat");
 
@@ -75,7 +118,7 @@ int main(int argc, char *argv[])
   pause();
 
 
-
+*/
 
   // quit sdl
   SDL_FreeSurface(image1); 
