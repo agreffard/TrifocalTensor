@@ -2,8 +2,13 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 
+#include <Eigen/SVD>
 #include "MathIO.hpp"
 #include "draw.hpp"
+
+using namespace std;
+using namespace Eigen;
+
 
 int main(int argc, char *argv[])
 {
@@ -43,9 +48,9 @@ int main(int argc, char *argv[])
   SDL_BlitSurface(image3, NULL, screen, &imageOffset);
 
   // load the point lists
-  Eigen::MatrixXd list1;
-  Eigen::MatrixXd list2;
-  Eigen::MatrixXd list3;
+  MatrixXd list1;
+  MatrixXd list2;
+  MatrixXd list3;
   kn::loadMatrix(list1,"input/list1.list");
   kn::loadMatrix(list2,"input/list2.list");
   kn::loadMatrix(list3,"input/list3.list");
@@ -61,7 +66,7 @@ int main(int argc, char *argv[])
   *********************************************************************/
 
 
- Eigen::MatrixXd A(28, 27);
+ MatrixXd A(28, 27);
 
  // initialisation of A
  for (int i=0; i<28; ++i)
@@ -83,7 +88,33 @@ int main(int argc, char *argv[])
     }
   }
 
-  std::cout << A << std::endl;
+cout << "This is the Matrix A : " << endl << A << endl;
+
+
+
+// Decomposition SVD of the Matrix A
+JacobiSVD<MatrixXd> svd(28, 27, ComputeThinU | ComputeThinV);
+svd.compute(A, ComputeThinU | ComputeThinV);
+
+cout << "The singular Values of A are : " << endl << svd.singularValues() << endl;
+
+
+VectorXf zeros(28);
+for(int i=0; i<28; ++i) {
+  zeros(i)=0;
+}
+
+/*
+ Now we know the values of our tensor t :
+VectorXf t(27);
+t = svd.solve(zeros);
+*/
+
+// This line generates an infinite incomprehensible errors ! Shouldn't it work ?
+cout << "The tensor t is : " << endl << svd.solve(zeros) << endl;
+
+
+
 
 
 
