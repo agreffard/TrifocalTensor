@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   *********************************************************************/
 
 
- MatrixXd A(28, 27);
+ MatrixXf A(28, 27);
 
  // initialisation of A
  for (int i=0; i<28; ++i)
@@ -79,10 +79,10 @@ int main(int argc, char *argv[])
     for (int i=0; i<2; ++i) {
       for (int l=0; l<2; ++l) {
         for (int k=0; k<3; ++k) {
-          A(4*p + 2*i + l, 3*2 + 3*l + k) = list1(p, k) * list2(p, i) * list3(p, 2);
-          A(4*p + 2*i + l, 3*i + 3*l + k) = - list1(p, k) * list2(p, 2) * list3(p, 2);
-          A(4*p + 2*i + l, 3*2 + 3*2 + k) = - list1(p, k) * list2(p, i) * list3(p, l);
-          A(4*p + 2*i + l, 3*i + 3*2 + k) = list1(p, k) * list2(p, 2) * list3(p, l);
+          A(4*p + 2*i + l, 3*3*2 + 3*l + k) = list1(p, k) * list2(p, i) * list3(p, 2);
+          A(4*p + 2*i + l, 3*3*i + 3*l + k) = - list1(p, k) * list2(p, 2) * list3(p, 2);
+          A(4*p + 2*i + l, 3*3*2 + 3*2 + k) = - list1(p, k) * list2(p, i) * list3(p, l);
+          A(4*p + 2*i + l, 3*3*i + 3*2 + k) = list1(p, k) * list2(p, 2) * list3(p, l);
         }
       }
     }
@@ -90,40 +90,37 @@ int main(int argc, char *argv[])
 
 cout << "This is the Matrix A : " << endl << A << endl;
 
-
-
 // Decomposition SVD of the Matrix A
-JacobiSVD<MatrixXd> svd(28, 27, ComputeThinU | ComputeThinV);
-svd.compute(A, ComputeThinU | ComputeThinV);
+JacobiSVD<MatrixXf> svd(A, ComputeThinU | ComputeThinV);
 
-cout << "The singular Values of A are : " << endl << svd.singularValues() << endl;
-
+cout << "Its singular values are:" << endl << svd.singularValues() << endl;
+//cout << "Its left singular vectors are the columns of the thin U matrix:" << endl << svd.matrixU() << endl;
+cout << "Its right singular vectors are the columns of the thin V matrix:" << endl << svd.matrixV() << endl;
 
 VectorXf zeros(28);
 for(int i=0; i<28; ++i) {
   zeros(i)=0;
 }
 
+VectorXf t(27) = svd.matrixV().transpose().col(26);
+
+
+// We have our tensor
+cout << t << endl;
+
+
+/********************************************************************
+
+  Second step : transfert
+
+*********************************************************************/
+
+
+
+
+
+
 /*
- Now we know the values of our tensor t :
-VectorXf t(27);
-t = svd.solve(zeros);
-*/
-
-// This line generates an infinite incomprehensible errors ! Shouldn't it work ?
-cout << "The tensor t is : " << endl << svd.solve(zeros) << endl;
-
-
-
-
-
-
-
-
-
-/*
-
-
   // save a list
   kn::saveMatrix(list1,"/tmp/myList.mat");
 
