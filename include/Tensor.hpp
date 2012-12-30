@@ -1,3 +1,6 @@
+#ifndef TENSOR_HPP
+#define TENSOR_HPP
+
 #include <cstring>
 #include <Eigen/Core>
 
@@ -19,3 +22,4 @@ public:
     void print() const;
 };
 
+#endif
