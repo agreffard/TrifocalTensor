@@ -3,6 +3,8 @@
 #include <SDL/SDL_image.h>
 
 #include <Eigen/SVD>
+#include <Tensor.hpp>
+
 #include "MathIO.hpp"
 #include "draw.hpp"
 
@@ -94,12 +96,10 @@ cout << "Its right singular vectors are the columns of the thin V matrix:" << en
 
 //VectorXf zeros = VectorXf::Zero(28);
 
-VectorXf t(27);
-t = svd.matrixV().transpose().col(26);
-
-
-// We have our tensor
-cout << t << endl;
+// we have our tensor
+Tensor tensor;
+tensor.setCoord( svd.matrixV().transpose().col(26) );
+print(tensor);
 
 
 /********************************************************************
@@ -108,7 +108,34 @@ cout << t << endl;
 
 *********************************************************************/
 
+MatrixXf B = MatrixXf::Zero(4, 3);
 
+// filling B
+    for (int i=0; i<2; ++i) {
+      for (int l=0; l<2; ++l) {
+        for (int k=0; k<3; ++k) {
+          B(2*i + l, 2) += list1(1, k) * list2(1, i) * tensor(2, l, k);
+          B(2*i + l, 2) += - list1(1, k) * list2(1, 2) * tensor(i, l, k);
+          B(2*i + l, l) += - list1(1, k) * list2(1, i) * tensor(2, 2, k);
+          B(2*i + l, l) += list1(1, k) * list2(1, 2) * tensor(i, 2, k);
+        }
+      }
+    }
+
+
+// Decomposition SVD of the Matrix B
+JacobiSVD<MatrixXf> svdB(B, ComputeThinU | ComputeThinV);
+
+VectorXf solution(3);
+VectorXf homogenSolution(3);
+solution = svdB.matrixV().transpose().col(2);
+
+for(int i=0; i<3; ++i) {
+  homogenSolution[i] = solution[i] / solution[2];
+}
+
+cout << "Solution : " << endl << solution << endl;
+cout << "Solution homogene : " << endl << homogenSolution << endl;
 
 
 
