@@ -4,12 +4,14 @@
 
 #include <Eigen/SVD>
 #include <Tensor.hpp>
+#include <tensorOperations.hpp>
 
 #include "MathIO.hpp"
 #include "draw.hpp"
 
 using namespace std;
 using namespace Eigen;
+
 
 void pushList(MatrixXd &list, int &nbRows, int x, int y){
 	list.conservativeResize(nbRows+1,3);
@@ -18,69 +20,6 @@ void pushList(MatrixXd &list, int &nbRows, int x, int y){
 	list(nbRows-1,0) = x;
 	list(nbRows-1,1) = y;
 	list(nbRows-1,2) = 1;
-}
-
-
-// Fonction finding the tensor from the 3 lists of points
-void fillTensor(Tensor& tensor, MatrixXf& list1, MatrixXf& list2, MatrixXf& list3) {
-
-  assert(list1.rows()==list2.rows());
-  assert(list1.rows()==list3.rows());
-
-  int nbPoints = list1.rows();
-  //cout << "nbPoints " << nbPoints << endl;
-
-  MatrixXf A = MatrixXf::Zero(nbPoints * 4, 27);
-
-  // filling A
-  for (int p=0; p<nbPoints; ++p) {
-    for (int i=0; i<2; ++i) {
-      for (int l=0; l<2; ++l) {
-        for (int k=0; k<3; ++k) {
-          A(4*p + 2*i + l, 3*3*2 + 3*l + k) += list1(p, k) * list2(p, i) * list3(p, 2);
-          A(4*p + 2*i + l, 3*3*i + 3*l + k) -= list1(p, k) * list2(p, 2) * list3(p, 2);
-          A(4*p + 2*i + l, 3*3*2 + 3*2 + k) -= list1(p, k) * list2(p, i) * list3(p, l);
-          A(4*p + 2*i + l, 3*3*i + 3*2 + k) += list1(p, k) * list2(p, 2) * list3(p, l);
-        }
-      }
-    }
-  }
-
-  // Decomposition SVD of the Matrix A
-  JacobiSVD<MatrixXf> svdA(A, ComputeThinU | ComputeThinV);
-
-  // we have our tensor
-  tensor.setCoord( svdA.matrixV().col(26) );
-
-}
-
-
-
-// Fonction doing the transfert and finding the correspounding point from the 2 others
-VectorXf transfert(VectorXf x1, VectorXf x2, Tensor tensor) {
-
-  MatrixXf MatB = MatrixXf::Zero(4, 2);
-  VectorXf Vecb = VectorXf::Zero(4); // second member of the equation
-
-  // filling B & Vecb
-      for (int i=0; i<2; ++i) {
-        for (int l=0; l<2; ++l) {
-          for (int k=0; k<3; ++k) {
-            MatB(2*i + l, l) += x1(k) * ( x2(2) * tensor(i, 2, k) - x2(i) * tensor(2, 2, k) );
-
-            // - because Vecb goes on the other side of the equation
-            Vecb(2*i + l) -= x1(k) * ( x2(i) * tensor(2, l, k) - x2(2) * tensor(i, l, k) );
-          }
-        }
-      }
-
-  JacobiSVD<MatrixXf> svdB(MatB, ComputeThinU | ComputeThinV);
-  VectorXf solution2d = svdB.solve(Vecb);
-
-  VectorXf homogeneSolution(3);
-  homogeneSolution << solution2d(0), solution2d(1), 1;
-
-  return homogeneSolution;
 }
 
 
@@ -132,7 +71,6 @@ int main(int argc, char *argv[])
 
 
 
-
  /********************************************************************
 
   First step : find the tensor from the three lists
@@ -150,7 +88,6 @@ int main(int argc, char *argv[])
 
   VectorXf solution = transfert(list1.row(0), list2.row(0), tensor);
   cout << endl << "solution : " << endl << solution << endl;
-
 
 
   MatrixXd myList1(1,3); int nbRows1 = 0;
