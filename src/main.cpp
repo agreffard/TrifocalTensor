@@ -12,6 +12,69 @@ using namespace std;
 using namespace Eigen;
 
 
+// Fonction finding the tensor from the 3 lists of points
+void fillTensor(Tensor& tensor, MatrixXf& list1, MatrixXf& list2, MatrixXf& list3) {
+
+  assert(list1.rows()==list2.rows());
+  assert(list1.rows()==list3.rows());
+
+  int nbPoints = list1.rows();
+  //cout << "nbPoints " << nbPoints << endl;
+
+  MatrixXf A = MatrixXf::Zero(nbPoints * 4, 27);
+
+  // filling A
+  for (int p=0; p<nbPoints; ++p) {
+    for (int i=0; i<2; ++i) {
+      for (int l=0; l<2; ++l) {
+        for (int k=0; k<3; ++k) {
+          A(4*p + 2*i + l, 3*3*2 + 3*l + k) += list1(p, k) * list2(p, i) * list3(p, 2);
+          A(4*p + 2*i + l, 3*3*i + 3*l + k) -= list1(p, k) * list2(p, 2) * list3(p, 2);
+          A(4*p + 2*i + l, 3*3*2 + 3*2 + k) -= list1(p, k) * list2(p, i) * list3(p, l);
+          A(4*p + 2*i + l, 3*3*i + 3*2 + k) += list1(p, k) * list2(p, 2) * list3(p, l);
+        }
+      }
+    }
+  }
+
+  // Decomposition SVD of the Matrix A
+  JacobiSVD<MatrixXf> svdA(A, ComputeThinU | ComputeThinV);
+
+  // we have our tensor
+  tensor.setCoord( svdA.matrixV().col(26) );
+
+}
+
+
+
+// Fonction doing the transfert and finding the correspounding point from the 2 others
+VectorXf transfert(VectorXf x1, VectorXf x2, Tensor tensor) {
+
+  MatrixXf MatB = MatrixXf::Zero(4, 2);
+  VectorXf Vecb = VectorXf::Zero(4); // second member of the equation
+
+  // filling B & Vecb
+      for (int i=0; i<2; ++i) {
+        for (int l=0; l<2; ++l) {
+          for (int k=0; k<3; ++k) {
+            MatB(2*i + l, l) += x1(k) * ( x2(2) * tensor(i, 2, k) - x2(i) * tensor(2, 2, k) );
+
+            // - because Vecb goes on the other side of the equation
+            Vecb(2*i + l) -= x1(k) * ( x2(i) * tensor(2, l, k) - x2(2) * tensor(i, l, k) );
+          }
+        }
+      }
+
+  JacobiSVD<MatrixXf> svdB(MatB, ComputeThinU | ComputeThinV);
+  VectorXf solution2d = svdB.solve(Vecb);
+
+  VectorXf homogeneSolution(3);
+  homogeneSolution << solution2d(0), solution2d(1), 1;
+
+  return homogeneSolution;
+}
+
+
 int main(int argc, char *argv[])
 {
   // init SDL image
@@ -50,9 +113,9 @@ int main(int argc, char *argv[])
   SDL_BlitSurface(image3, NULL, screen, &imageOffset);
 
   // load the point lists
-  MatrixXd list1;
-  MatrixXd list2;
-  MatrixXd list3;
+  MatrixXf list1;
+  MatrixXf list2;
+  MatrixXf list3;
   kn::loadMatrix(list1,"input/list1.list");
   kn::loadMatrix(list2,"input/list2.list");
   kn::loadMatrix(list3,"input/list3.list");
@@ -66,39 +129,9 @@ int main(int argc, char *argv[])
   First step : find the tensor from the three lists
 
   *********************************************************************/
-
-
-MatrixXf A = MatrixXf::Zero(28, 27);
-
-  // filling A
-  for (int p=0; p<7; ++p) {
-    for (int i=0; i<2; ++i) {
-      for (int l=0; l<2; ++l) {
-        for (int k=0; k<3; ++k) {
-          A(4*p + 2*i + l, 3*3*2 + 3*l + k) += list1(p, k) * list2(p, i) * list3(p, 2);
-          A(4*p + 2*i + l, 3*3*i + 3*l + k) -= list1(p, k) * list2(p, 2) * list3(p, 2);
-          A(4*p + 2*i + l, 3*3*2 + 3*2 + k) -= list1(p, k) * list2(p, i) * list3(p, l);
-          A(4*p + 2*i + l, 3*3*i + 3*2 + k) += list1(p, k) * list2(p, 2) * list3(p, l);
-        }
-      }
-    }
-  }
-
-//cout << "This is the Matrix A : " << endl << A << endl;
-
-// Decomposition SVD of the Matrix A
-JacobiSVD<MatrixXf> svd(A, ComputeThinU | ComputeThinV);
-
-//cout << "Its singular values are:" << endl << svd.singularValues() << endl;
-//cout << "Its left singular vectors are the columns of the thin U matrix:" << endl << svd.matrixU() << endl;
-//cout << "Its right singular vectors are the columns of the thin V matrix:" << endl << svd.matrixV() << endl;
-
-
-// we have our tensor
 Tensor tensor;
-tensor.setCoord( svd.matrixV().col(26) );
-// print(tensor);
-
+fillTensor(tensor, list1, list2, list3);
+print(tensor);
 
 /********************************************************************
 
@@ -106,32 +139,9 @@ tensor.setCoord( svd.matrixV().col(26) );
 
 *********************************************************************/
 
+VectorXf solution = transfert(list1.row(0), list2.row(0), tensor);
+cout << "solution : " << endl << solution << endl;
 
-
-
-MatrixXf MatB = MatrixXf::Zero(4, 2);
-VectorXf Vecb = VectorXf::Zero(4); // second member of the equation
-
-// filling B & Vecb
-    for (int i=0; i<2; ++i) {
-      for (int l=0; l<2; ++l) {
-        for (int k=0; k<3; ++k) {
-          MatB(2*i + l, l) += list1(2, k) * ( list2(2, 2) * tensor(i, 2, k) - list2(2, i) * tensor(2, 2, k) );
-
-          // - because Vecb goes on the other side of the equation
-          Vecb(2*i + l) -= list1(2, k) * ( list2(2, i) * tensor(2, l, k) - list2(2, 2) * tensor(i, l, k) );
-        }
-      }
-    }
-
-JacobiSVD<MatrixXf> svdB(MatB, ComputeThinU | ComputeThinV);
-
-VectorXf solution2d = svdB.solve(Vecb);
-
-VectorXf homogeneSolution(3);
-homogeneSolution << solution2d(0), solution2d(1), 1;
-
-cout<<"Solution : "<<endl<<homogeneSolution<<endl;
 
 
 
