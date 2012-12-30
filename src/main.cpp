@@ -175,23 +175,22 @@ cout << t << endl;
 			  done = true;
 			  break;
 		  }
+		  
 		  if(e.type == SDL_KEYUP){
 			  if(e.key.keysym.sym == SDLK_ESCAPE){
 				  done = true;
 				  break;
 			  }
 			  if(e.key.keysym.sym == SDLK_SPACE){
-				  //~ cout << endl;
-				  //~ cout << "list1" << endl;
-				  //~ cout << myList1 << endl;
-				  //~ cout << endl;
-				  //~ cout << "list2" << endl;
-				  //~ cout << myList2 << endl;
-				  //~ cout << endl;
-				  //~ cout << "list3" << endl;
-				  //~ cout << myList3 << endl;
-				  cout << "nbRows1 : " << nbRows1 << endl;
-				  break;
+				  cout << endl;
+				  cout << "list1" << endl;
+				  cout << myList1 << endl;
+				  cout << endl;
+				  cout << "list2" << endl;
+				  cout << myList2 << endl;
+				  cout << endl;
+				  cout << "list3" << endl;
+				  cout << myList3 << endl;
 			  }
 			  if(e.key.keysym.sym == SDLK_s){
 				  if(nbRows1 != 0){
@@ -204,7 +203,8 @@ cout << t << endl;
 					  kn::saveMatrix(myList3, "myList3.list");
 				  }
 			  }
-		  }
+		  } // end SDL_KEYUP
+		  
 		  if(e.type == SDL_MOUSEBUTTONUP){
 			  if(e.button.x < image1->w)
 				pushList(myList1, nbRows1, e.button.x % 400, e.button.y);
@@ -214,7 +214,7 @@ cout << t << endl;
 				
 			  if(e.button.x >= image1->w + image2->w)
 				pushList(myList3, nbRows3, e.button.x % 400, e.button.y);
-		  }
+		  } // end SDL_MOUSEBUTTONUP
 		  
 	  } // end events
 	  
