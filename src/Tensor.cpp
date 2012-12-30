@@ -23,5 +23,5 @@ void Tensor::setCoord(VectorXf coord) {
 }
 
 void print(const Tensor& t) {
-    std::cout << t.getCoord() << std::endl;
+    std::cout << "tensor : " << std::endl << t.getCoord() << std::endl;
 }

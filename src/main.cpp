@@ -75,31 +75,29 @@ MatrixXf A = MatrixXf::Zero(28, 27);
     for (int i=0; i<2; ++i) {
       for (int l=0; l<2; ++l) {
         for (int k=0; k<3; ++k) {
-          A(4*p + 2*i + l, 3*3*2 + 3*l + k) = list1(p, k) * list2(p, i) * list3(p, 2);
-          A(4*p + 2*i + l, 3*3*i + 3*l + k) = - list1(p, k) * list2(p, 2) * list3(p, 2);
-          A(4*p + 2*i + l, 3*3*2 + 3*2 + k) = - list1(p, k) * list2(p, i) * list3(p, l);
-          A(4*p + 2*i + l, 3*3*i + 3*2 + k) = list1(p, k) * list2(p, 2) * list3(p, l);
+          A(4*p + 2*i + l, 3*3*2 + 3*l + k) += list1(p, k) * list2(p, i) * list3(p, 2);
+          A(4*p + 2*i + l, 3*3*i + 3*l + k) -= list1(p, k) * list2(p, 2) * list3(p, 2);
+          A(4*p + 2*i + l, 3*3*2 + 3*2 + k) -= list1(p, k) * list2(p, i) * list3(p, l);
+          A(4*p + 2*i + l, 3*3*i + 3*2 + k) += list1(p, k) * list2(p, 2) * list3(p, l);
         }
       }
     }
   }
 
-cout << "This is the Matrix A : " << endl << A << endl;
+//cout << "This is the Matrix A : " << endl << A << endl;
 
 // Decomposition SVD of the Matrix A
 JacobiSVD<MatrixXf> svd(A, ComputeThinU | ComputeThinV);
 
-cout << "Its singular values are:" << endl << svd.singularValues() << endl;
+//cout << "Its singular values are:" << endl << svd.singularValues() << endl;
 //cout << "Its left singular vectors are the columns of the thin U matrix:" << endl << svd.matrixU() << endl;
-cout << "Its right singular vectors are the columns of the thin V matrix:" << endl << svd.matrixV() << endl;
+//cout << "Its right singular vectors are the columns of the thin V matrix:" << endl << svd.matrixV() << endl;
 
-
-//VectorXf zeros = VectorXf::Zero(28);
 
 // we have our tensor
 Tensor tensor;
-tensor.setCoord( svd.matrixV().transpose().col(26) );
-print(tensor);
+tensor.setCoord( svd.matrixV().col(26) );
+// print(tensor);
 
 
 /********************************************************************
@@ -108,35 +106,32 @@ print(tensor);
 
 *********************************************************************/
 
-MatrixXf B = MatrixXf::Zero(4, 3);
 
-// filling B
+
+
+MatrixXf MatB = MatrixXf::Zero(4, 2);
+VectorXf Vecb = VectorXf::Zero(4); // second member of the equation
+
+// filling B & Vecb
     for (int i=0; i<2; ++i) {
       for (int l=0; l<2; ++l) {
         for (int k=0; k<3; ++k) {
-          B(2*i + l, 2) += list1(1, k) * list2(1, i) * tensor(2, l, k);
-          B(2*i + l, 2) += - list1(1, k) * list2(1, 2) * tensor(i, l, k);
-          B(2*i + l, l) += - list1(1, k) * list2(1, i) * tensor(2, 2, k);
-          B(2*i + l, l) += list1(1, k) * list2(1, 2) * tensor(i, 2, k);
+          MatB(2*i + l, l) += list1(2, k) * ( list2(2, 2) * tensor(i, 2, k) - list2(2, i) * tensor(2, 2, k) );
+
+          // - because Vecb goes on the other side of the equation
+          Vecb(2*i + l) -= list1(2, k) * ( list2(2, i) * tensor(2, l, k) - list2(2, 2) * tensor(i, l, k) );
         }
       }
     }
 
+JacobiSVD<MatrixXf> svdB(MatB, ComputeThinU | ComputeThinV);
 
-// Decomposition SVD of the Matrix B
-JacobiSVD<MatrixXf> svdB(B, ComputeThinU | ComputeThinV);
+VectorXf solution2d = svdB.solve(Vecb);
 
-VectorXf solution(3);
-VectorXf homogenSolution(3);
-solution = svdB.matrixV().transpose().col(2);
+VectorXf homogeneSolution(3);
+homogeneSolution << solution2d(0), solution2d(1), 1;
 
-for(int i=0; i<3; ++i) {
-  homogenSolution[i] = solution[i] / solution[2];
-}
-
-cout << "Solution : " << endl << solution << endl;
-cout << "Solution homogene : " << endl << homogenSolution << endl;
-
+cout<<"Solution : "<<endl<<homogeneSolution<<endl;
 
 
 
