@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 
   // create a screen surface that will include the 3 images
   SDL_Surface *screen = SDL_SetVideoMode(image1->w + image2->w + image3->w, image1->h, 32, SDL_HWSURFACE);
-  SDL_WM_SetCaption("Trifocal Tensor", NULL);
+  SDL_WM_SetCaption("Trifocal Tensor by Aurelien & Cedric", NULL);
 
   // bibd the images on the surface  
   SDL_Rect imageOffset;
@@ -138,9 +138,9 @@ int main(int argc, char *argv[])
   First step : find the tensor from the three lists
 
   *********************************************************************/
-Tensor tensor;
-fillTensor(tensor, list1, list2, list3);
-tensor.print();
+  Tensor tensor;
+  fillTensor(tensor, list1, list2, list3);
+  tensor.print();
 
 /********************************************************************
 
@@ -148,8 +148,8 @@ tensor.print();
 
 *********************************************************************/
 
-VectorXf solution = transfert(list1.row(0), list2.row(0), tensor);
-cout << endl << "solution : " << endl << solution << endl;
+  VectorXf solution = transfert(list1.row(0), list2.row(0), tensor);
+  cout << endl << "solution : " << endl << solution << endl;
 
 
 
