@@ -10,7 +10,7 @@ Tensor::Tensor(){
 
 Tensor::~Tensor(){}
 
-float Tensor::operator()(size_t i, size_t j, size_t k) {
+float Tensor::operator()(size_t i, size_t j, size_t k) const {
     return m_tensorCoord[9*i + 3*j + k];
 }
 
@@ -22,6 +22,6 @@ void Tensor::setCoord(VectorXf coord) {
     m_tensorCoord = coord;
 }
 
-void print(const Tensor& t) {
-    std::cout << "tensor : " << std::endl << t.getCoord() << std::endl;
+void Tensor::print() const {
+    std::cout << "tensor : " << std::endl << m_tensorCoord << std::endl;
 }

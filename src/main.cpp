@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
   *********************************************************************/
 Tensor tensor;
 fillTensor(tensor, list1, list2, list3);
-print(tensor);
+tensor.print();
 
 /********************************************************************
 
@@ -140,7 +140,7 @@ print(tensor);
 *********************************************************************/
 
 VectorXf solution = transfert(list1.row(0), list2.row(0), tensor);
-cout << "solution : " << endl << solution << endl;
+cout << endl << "solution : " << endl << solution << endl;
 
 
 

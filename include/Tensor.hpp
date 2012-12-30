@@ -11,11 +11,11 @@ private:
 public:
     Tensor();
     ~Tensor();
-    float operator()(size_t i, size_t j, size_t k);
+    float operator()(size_t i, size_t j, size_t k) const;
 
     VectorXf getCoord() const;
     void setCoord(VectorXf coord);
 
+    void print() const;
 };
 
-void print(const Tensor& t);
