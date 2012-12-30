@@ -11,6 +11,7 @@
 using namespace std;
 using namespace Eigen;
 
+
 void pushList(MatrixXd &list, int &nbRows, int x, int y){
 	list.conservativeResize(nbRows+1,3);
 	++nbRows;
@@ -57,19 +58,37 @@ void fillTensor(Tensor& tensor, MatrixXf& list1, MatrixXf& list2, MatrixXf& list
 
 
 // Fonction doing the transfert and finding the correspounding point from the 2 others
-VectorXf transfert(VectorXf x1, VectorXf x2, Tensor tensor) {
+VectorXf transfert(VectorXf x1, VectorXf x2, Tensor tensor, int unknownImage) {
 
   MatrixXf MatB = MatrixXf::Zero(4, 2);
   VectorXf Vecb = VectorXf::Zero(4); // second member of the equation
+  float factor;
 
   // filling B & Vecb
       for (int i=0; i<2; ++i) {
         for (int l=0; l<2; ++l) {
           for (int k=0; k<3; ++k) {
-            MatB(2*i + l, l) += x1(k) * ( x2(2) * tensor(i, 2, k) - x2(i) * tensor(2, 2, k) );
+            switch (unknownImage) {
+              case 1:
+                factor = x1(i) * x2(2) * tensor(2, l, k) - x1(2) * x2(2) * tensor(i, l, k) - x1(i) * x2(l) * tensor(2, 2, k) + x1(2) * x2(l) * tensor(i, 2, k);
+                if (k==2) {
+                  // Soustraction because Vecb goes on the other side of the equation
+                  Vecb(2*i + l) -= factor;
+                }
+                else {
+                  MatB(2*i + l, k) += factor;
+                }
+                break;
+              case 2:
+                MatB(2*i + l, i) += x1(k) * ( x2(2) * tensor(2, l, k) - x2(i) * tensor(2, 2, k) );
+                Vecb(2*i + l) -= x1(k) * ( x2(l) * tensor(i, 2, k) - x2(2) * tensor(i, l, k) );
+                break;
+              default:
+                MatB(2*i + l, l) += x1(k) * ( x2(2) * tensor(i, 2, k) - x2(i) * tensor(2, 2, k) );
+                Vecb(2*i + l) -= x1(k) * ( x2(i) * tensor(2, l, k) - x2(2) * tensor(i, l, k) );
+                break;
+            }
 
-            // - because Vecb goes on the other side of the equation
-            Vecb(2*i + l) -= x1(k) * ( x2(i) * tensor(2, l, k) - x2(2) * tensor(i, l, k) );
           }
         }
       }
@@ -148,7 +167,7 @@ tensor.print();
 
 *********************************************************************/
 
-VectorXf solution = transfert(list1.row(0), list2.row(0), tensor);
+VectorXf solution = transfert(list2.row(0), list3.row(0), tensor, 1);
 cout << endl << "solution : " << endl << solution << endl;
 
 
