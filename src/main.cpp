@@ -66,13 +66,7 @@ int main(int argc, char *argv[])
   *********************************************************************/
 
 
- MatrixXf A(28, 27);
-
- // initialisation of A
- for (int i=0; i<28; ++i)
-    for(int j=0; j<27; ++j)
-      A(i,j) = 0;
-
+MatrixXf A = MatrixXf::Zero(28, 27);
 
   // filling A
   for (int p=0; p<7; ++p) {
@@ -97,10 +91,8 @@ cout << "Its singular values are:" << endl << svd.singularValues() << endl;
 //cout << "Its left singular vectors are the columns of the thin U matrix:" << endl << svd.matrixU() << endl;
 cout << "Its right singular vectors are the columns of the thin V matrix:" << endl << svd.matrixV() << endl;
 
-VectorXf zeros(28);
-for(int i=0; i<28; ++i) {
-  zeros(i)=0;
-}
+
+//VectorXf zeros = VectorXf::Zero(28);
 
 VectorXf t(27);
 t = svd.matrixV().transpose().col(26);
