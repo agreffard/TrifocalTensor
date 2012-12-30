@@ -102,7 +102,8 @@ for(int i=0; i<28; ++i) {
   zeros(i)=0;
 }
 
-VectorXf t(27) = svd.matrixV().transpose().col(26);
+VectorXf t(27);
+t = svd.matrixV().transpose().col(26);
 
 
 // We have our tensor

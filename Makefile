@@ -1,55 +1,25 @@
-CXX      =  g++
-CXXFLAGS = -Wall -O2 -g #-pg #gprof
-LIB      = -lSDL -lSDL_image
-INCLUDES = -I ~/eigen/
+CC = g++
+CFLAGS = -Wall -ansi -pedantic -I include
+LDFLAGS = -lSDL -lGLU -lGL -lm -lSDL_image
 
-CXXFLAGS += $(INCLUDES)
+SRC_PATH = src
+BIN_PATH = bin
 
-OBJ      = MathIO.o draw.o main.o
-RM       = rm -f
-BIN      = trifocal
-DIRNAME  = $(shell basename $$PWD)
-BACKUP   = $(shell date +`basename $$PWD`-%m.%d.%H.%M.tgz)
-STDNAME  = $(DIRNAME).tgz
+EXEC = trifocalTensor
 
-all : $(BIN)
+SRC_FILES = $(shell find $(SRC_PATH) -type f -name '*.cpp')
+OBJ_FILES = $(patsubst $(SRC_PATH)/%.cpp, $(SRC_PATH)/%.o, $(SRC_FILES))
 
-$(BIN) : $(OBJ)
-	$(CXX) $(CXXFLAGS) $(OBJ) $(LIB) $(INCLUDES)  -o $(BIN)
-	@echo "--------------------------------------------------------------"
-	@echo "                 to execute type: ./$(BIN) &"
-	@echo "--------------------------------------------------------------"
+all: $(BIN_PATH)/$(EXEC)
 
-MathIO.o : MathIO.cpp MathIO.hpp 
-	@echo "compile MathIO"
-	$(CXX) $(CXXFLAGS) -c $<  
-	@echo "done..."
+$(BIN_PATH)/$(EXEC): $(OBJ_FILES)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
-draw.o : draw.cpp draw.hpp 
-	@echo "compile MathIO"
-	$(CXX) $(CXXFLAGS) -c $<  
-	@echo "done..."
+$(SRC_PATH)/%.o: $(SRC_PATH)/%.cpp
+	$(CC) -c -o $@ $(CFLAGS) $^ 
 
-main.o : main.cpp MathIO.o draw.o
-	@echo "compile main"
-	$(CXX) $(CXXFLAGS) -c $<  
-	@echo "done..."
+clean:
+	rm $(OBJ_FILES)
 
-clean :	
-	@echo "**************************"
-	@echo "CLEAN"
-	@echo "**************************"
-	$(RM) *~ $(OBJ) $(BIN)  
-
-bigclean :
-	@echo "**************************"
-	@echo "BIG CLEAN"
-	@echo "**************************"
-	find . -name '*~' -exec rm -fv {} \;
-	$(RM) *~ $(OBJ) $(BIN) output/*
-
-tar : clean 
-	@echo "**************************"
-	@echo "TAR"
-	@echo "**************************"
-	cd .. && tar cvfz $(BACKUP) $(DIRNAME)
+cleanall:
+	rm $(BIN_PATH)/$(EXEC) $(OBJ_FILES)
