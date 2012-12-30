@@ -9,6 +9,15 @@
 using namespace std;
 using namespace Eigen;
 
+void pushList(MatrixXd &list, int &nbRows, int x, int y){
+	list.conservativeResize(nbRows+1,3);
+	++nbRows;
+	  
+	list(nbRows-1,0) = x;
+	list(nbRows-1,1) = y;
+	list(nbRows-1,2) = 1;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -120,8 +129,10 @@ cout << t << endl;
 
 
 
+  MatrixXd myList1(1,3); int nbRows1 = 0;
+  MatrixXd myList2(1,3); int nbRows2 = 0;
+  MatrixXd myList3(1,3); int nbRows3 = 0;
 
-/*
   // save a list
   kn::saveMatrix(list1,"/tmp/myList.mat");
 
@@ -129,25 +140,89 @@ cout << t << endl;
   Uint32 red  = 0xffff0000;
   Uint32 blue = 0xff0000ff;
   Uint32 yellow = 0xffffff00;
+  
+  //~ kn::loadMatrix(myList1,"myList1.list");
+  //~ nbRows1 = myList1.rows(); // don't forget to update if a matrix is loaded
+  
+  bool done = false;
+  while(!done){
+	  
+	  // draw points on image1
+	  if(nbRows1 != 0){
+		for(int i=0; i<myList1.rows(); ++i)
+			fill_circle(screen, myList1(i,0), myList1(i,1), 3, red);
+	  }
 
-  // draw points on image1
-  for(int i=0; i<list1.rows(); ++i)
-    fill_circle(screen, list1(i,0), list1(i,1), 3, red);
+	  // draw points on image2
+	  if(nbRows2 != 0){
+		for(int i=0; i<myList2.rows(); ++i)
+			fill_circle(screen, myList2(i,0)+image1->w, myList2(i,1), 3, blue);
+	  }
 
-  // draw points on image2
-  for(int i=0; i<list2.rows(); ++i)
-    fill_circle(screen, list2(i,0)+image1->w, list2(i,1), 3, blue);
+	  // draw points on image3
+	  if(nbRows3 != 0){
+		for(int i=0; i<myList3.rows(); ++i)
+			fill_circle(screen, myList3(i,0)+image1->w+image2->w, myList3(i,1), 3, yellow);
+	  }
 
-  // draw points on image3
-  for(int i=0; i<list3.rows(); ++i)
-    fill_circle(screen, list3(i,0)+image1->w+image2->w, list3(i,1), 3, yellow);
+	  // display everything
+	  SDL_Flip(screen);
+	  //~ pause();
+	  
+	  SDL_Event e;
+	  while(SDL_PollEvent(&e)) {
+		  if(e.type == SDL_QUIT){
+			  done = true;
+			  break;
+		  }
+		  if(e.type == SDL_KEYUP){
+			  if(e.key.keysym.sym == SDLK_ESCAPE){
+				  done = true;
+				  break;
+			  }
+			  if(e.key.keysym.sym == SDLK_SPACE){
+				  //~ cout << endl;
+				  //~ cout << "list1" << endl;
+				  //~ cout << myList1 << endl;
+				  //~ cout << endl;
+				  //~ cout << "list2" << endl;
+				  //~ cout << myList2 << endl;
+				  //~ cout << endl;
+				  //~ cout << "list3" << endl;
+				  //~ cout << myList3 << endl;
+				  cout << "nbRows1 : " << nbRows1 << endl;
+				  break;
+			  }
+			  if(e.key.keysym.sym == SDLK_s){
+				  if(nbRows1 != 0){
+					  kn::saveMatrix(myList1, "myList1.list");
+				  }
+				  if(nbRows2 != 0){
+					  kn::saveMatrix(myList2, "myList2.list");
+				  }
+				  if(nbRows3 != 0){
+					  kn::saveMatrix(myList3, "myList3.list");
+				  }
+			  }
+		  }
+		  if(e.type == SDL_MOUSEBUTTONUP){
+			  if(e.button.x < image1->w)
+				pushList(myList1, nbRows1, e.button.x % 400, e.button.y);
+				
+			  if(e.button.x >= image1->w && e.button.x < image1->w + image2->w)
+				pushList(myList2, nbRows2, e.button.x % 400, e.button.y);
+				
+			  if(e.button.x >= image1->w + image2->w)
+				pushList(myList3, nbRows3, e.button.x % 400, e.button.y);
+		  }
+		  
+	  } // end events
+	  
+  } // end display
+  
+  
 
-  // display everything
-  SDL_Flip(screen);
-  pause();
 
-
-*/
 
   // quit sdl
   SDL_FreeSurface(image1); 
@@ -156,7 +231,7 @@ cout << t << endl;
   IMG_Quit();
   SDL_Quit();
 
-  return EXIT_SUCCESS;
+  return (EXIT_SUCCESS);
 }
 
 
