@@ -295,10 +295,10 @@ while(!done){
             fill_circle(screen, myPoints(0, 0), myPoints(0, 1), 3, red);
         }
         if (myPoints(1, 2)!=0) {
-            fill_circle(screen, myPoints(1, 0), myPoints(1, 1), 3, red);
+            fill_circle(screen, myPoints(1, 0)+image1->w, myPoints(1, 1), 3, red);
         }
         if (myPoints(2, 2)!=0) {
-            fill_circle(screen, myPoints(2, 0), myPoints(2, 1), 3, red);
+            fill_circle(screen, myPoints(2, 0)+image1->w+image2->w, myPoints(2, 1), 3, red);
         }
     }
     else if (state == SOLUTION) {
@@ -307,13 +307,13 @@ while(!done){
             fill_circle(screen, myPoints(0, 0), myPoints(0, 1), 3, red);
         }
         if (myPoints(1, 2)!=0) {
-            fill_circle(screen, myPoints(1, 0), myPoints(1, 1), 3, red);
+            fill_circle(screen, myPoints(1, 0)+image1->w, myPoints(1, 1), 3, red);
         }
         if (myPoints(2, 2)!=0) {
-            fill_circle(screen, myPoints(2, 0), myPoints(2, 1), 3, red);
+            fill_circle(screen, myPoints(2, 0)+image1->w+image2->w, myPoints(2, 1), 3, red);
         }
-
-        fill_circle(screen, solution(0)+image1->w+image2->w, solution(1), 3, red);
+        int numImage = *(unKnownImage.begin())-1;
+        fill_circle(screen, solution(0) + image1->w * numImage, solution(1), 3, red);
     }
 
     // display everything
@@ -366,7 +366,7 @@ while(!done){
 
         if(e.type == SDL_MOUSEBUTTONUP){
             if (state==SOLUTION) {
-                //return to the transfert state
+                // we return to the transfert state so we reinitializate these variables :
                 myPoints = MatrixXf::Zero(3, 3);
                 pointsTransfert.clear();
                 unKnownImage.clear();
@@ -382,11 +382,18 @@ while(!done){
                     pushList(myList1, nbRows1, e.button.x % 400, e.button.y);
                 }
                 else if (state==TRANSFERT) {
+                    // we insert the correspounding coordinates for the first point
                     myPoints.row(0) << e.button.x % 400, e.button.y, 1;
+                    // we insert 1 in the known points and we remove 1 in the unkown images
                     pointsTransfert.insert(1);
                     unKnownImage.erase(1);
+
+                    // if 2 points have been clicked we can do the transfert and display solution
                     if (pointsTransfert.size()==2) {
-                        solution = transfert(myPoints.row(*(pointsTransfert.begin())-1), myPoints.row(*(pointsTransfert.begin())-1), tensor, *(unKnownImage.begin()));
+                        // the first point is the point at the first row of the matrix myPoints. 
+                        // the seconc point is the point at the second (and last) row.
+                        // the unknown image is the only one wich remain in the unKnownImage set.
+                        solution = transfert(myPoints.row(*(pointsTransfert.begin())-1), myPoints.row(*(pointsTransfert.rbegin())-1), tensor, *(unKnownImage.begin()));
                         state = SOLUTION;
                     }
                 }
@@ -400,8 +407,9 @@ while(!done){
                     myPoints.row(1) << e.button.x % 400, e.button.y, 1;
                     pointsTransfert.insert(2);
                     unKnownImage.erase(2);
+
                     if (pointsTransfert.size()==2) {
-                        solution = transfert(myPoints.row(*(pointsTransfert.begin())-1), myPoints.row(*(pointsTransfert.begin())-1), tensor, *(unKnownImage.begin()));
+                        solution = transfert(myPoints.row(*(pointsTransfert.begin())-1), myPoints.row(*(pointsTransfert.rbegin())-1), tensor, *(unKnownImage.begin()));
                         state = SOLUTION;
                     }
                 }
@@ -415,8 +423,9 @@ while(!done){
                     myPoints.row(2) << e.button.x % 400, e.button.y, 1;
                     pointsTransfert.insert(3);
                     unKnownImage.erase(3);
+
                     if (pointsTransfert.size()==2) {
-                        solution = transfert(myPoints.row(*(pointsTransfert.begin())-1), myPoints.row(*(pointsTransfert.begin())-1), tensor, *(unKnownImage.begin()));
+                        solution = transfert(myPoints.row(*(pointsTransfert.begin())-1), myPoints.row(*(pointsTransfert.rbegin())-1), tensor, *(unKnownImage.begin()));
                         state = SOLUTION;
                     }
                 }
