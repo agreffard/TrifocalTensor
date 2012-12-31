@@ -61,7 +61,7 @@ VectorXf transfert(VectorXf x1, VectorXf x2, Tensor tensor, int unknownImage) {
                 MatB(2*i + l, i) += x1(k) * ( x2(2) * tensor(2, l, k) - x2(i) * tensor(2, 2, k) );
                 Vecb(2*i + l) -= x1(k) * ( x2(l) * tensor(i, 2, k) - x2(2) * tensor(i, l, k) );
                 break;
-              default:
+              case 3:
                 MatB(2*i + l, l) += x1(k) * ( x2(2) * tensor(i, 2, k) - x2(i) * tensor(2, 2, k) );
                 Vecb(2*i + l) -= x1(k) * ( x2(i) * tensor(2, l, k) - x2(2) * tensor(i, l, k) );
                 break;

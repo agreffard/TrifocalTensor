@@ -1,4 +1,5 @@
 #include <iostream>
+#include <set>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 
@@ -37,7 +38,6 @@ void printHelp(){
 	cout << endl;
 }
 
-
 /*************************/
 /*         MAIN          */
 /*************************/
@@ -46,21 +46,24 @@ int main(int argc, char *argv[])
 {
   
     // load the point lists
-    MatrixXf list1;
+    /*MatrixXf list1;
     MatrixXf list2;
     MatrixXf list3;
     kn::loadMatrix(list1,"input/list1.list");
     kn::loadMatrix(list2,"input/list2.list");
-    kn::loadMatrix(list3,"input/list3.list");
+    kn::loadMatrix(list3,"input/list3.list");*/
 
     MatrixXf myList1(1,3); int nbRows1 = 0;
     MatrixXf myList2(1,3); int nbRows2 = 0;
     MatrixXf myList3(1,3); int nbRows3 = 0;
 
-    VectorXf myPoint1 = VectorXf::Zero(3);
-    VectorXf myPoint2 = VectorXf::Zero(3);
-    VectorXf myPoint3 = VectorXf::Zero(3);
-    int nbPointsTransfert = 0;
+    // points for the transfert
+    MatrixXf myPoints = MatrixXf::Zero(3,3);
+    set<int> pointsTransfert;
+    set<int> unKnownImage;
+    unKnownImage.insert(1);
+    unKnownImage.insert(2);
+    unKnownImage.insert(3);
     VectorXf solution = VectorXf::Zero(3);
 
     SDL_Surface * image1;
@@ -115,6 +118,11 @@ int main(int argc, char *argv[])
 				kn::loadMatrix(myList3,"myList3.list"); nbRows3 = myList3.rows();
 				
 				cout << "Last saved point lists loaded" << endl;
+                cout << endl << "Calculation Tensor" << endl;
+                fillTensor(tensor, myList1, myList2, myList3);
+                tensor.print();
+                cout << "truc " << endl;
+                state = TRANSFERT;
 			}
 			
 			// load external lists
@@ -262,6 +270,7 @@ bool done = false;
 while(!done){
   
     if (state==FILL_LISTS) {
+        SDL_WM_SetCaption("Trifocal Tensor by Aurelien & Cedric - FILL_LISTS", NULL);
 	  // draw points on image1
 	  if(nbRows1 != 0){
 		for(int i=0; i<myList1.rows(); ++i)
@@ -281,18 +290,30 @@ while(!done){
 	  }
     }
     else if (state == TRANSFERT) {
-        if (myPoint1(2)!=0) {
-            fill_circle(screen, myPoint1(0), myPoint1(1), 3, red);
+        SDL_WM_SetCaption("Trifocal Tensor by Aurelien & Cedric - TRANSFERT", NULL);
+        if (myPoints(0, 2)!=0) {
+            fill_circle(screen, myPoints(0, 0), myPoints(0, 1), 3, red);
         }
-        if (myPoint2(2)!=0) {
-            fill_circle(screen, myPoint2(0)+image1->w, myPoint2(1), 3, blue);
+        if (myPoints(1, 2)!=0) {
+            fill_circle(screen, myPoints(1, 0), myPoints(1, 1), 3, red);
         }
-        if (myPoint3(2)!=0) {
-            fill_circle(screen, myPoint3(0)+image1->w+image2->w, myPoint2(1), 3, yellow);
+        if (myPoints(2, 2)!=0) {
+            fill_circle(screen, myPoints(2, 0), myPoints(2, 1), 3, red);
         }
     }
     else if (state == SOLUTION) {
-        fill_circle(screen, solution(0), solution(1)+image1->w+image2->w, 3, red);
+        SDL_WM_SetCaption("Trifocal Tensor by Aurelien & Cedric - SOLUTION", NULL);
+        if (myPoints(0, 2)!=0) {
+            fill_circle(screen, myPoints(0, 0), myPoints(0, 1), 3, red);
+        }
+        if (myPoints(1, 2)!=0) {
+            fill_circle(screen, myPoints(1, 0), myPoints(1, 1), 3, red);
+        }
+        if (myPoints(2, 2)!=0) {
+            fill_circle(screen, myPoints(2, 0), myPoints(2, 1), 3, red);
+        }
+
+        fill_circle(screen, solution(0)+image1->w+image2->w, solution(1), 3, red);
     }
 
     // display everything
@@ -344,43 +365,58 @@ while(!done){
         } // end SDL_KEYUP
 
         if(e.type == SDL_MOUSEBUTTONUP){
-            if(e.button.x < image1->w) {
+            if (state==SOLUTION) {
+                //return to the transfert state
+                myPoints = MatrixXf::Zero(3, 3);
+                pointsTransfert.clear();
+                unKnownImage.clear();
+                unKnownImage.insert(1);
+                unKnownImage.insert(2);
+                unKnownImage.insert(3);
+                solution = VectorXf::Zero(3);
+                state = TRANSFERT;
+            }
+
+            else if(e.button.x < image1->w) {
                 if (state==FILL_LISTS) {
                     pushList(myList1, nbRows1, e.button.x % 400, e.button.y);
                 }
                 else if (state==TRANSFERT) {
-                    myPoint1 << e.button.x % 400, e.button.y, 1;
-                    ++nbPointsTransfert;
-                    if (nbPointsTransfert==2) {
-                        solution = transfert(myPoint1, myPoint2, tensor);
+                    myPoints.row(0) << e.button.x % 400, e.button.y, 1;
+                    pointsTransfert.insert(1);
+                    unKnownImage.erase(1);
+                    if (pointsTransfert.size()==2) {
+                        solution = transfert(myPoints.row(*(pointsTransfert.begin())-1), myPoints.row(*(pointsTransfert.begin())-1), tensor, *(unKnownImage.begin()));
                         state = SOLUTION;
                     }
                 }
             }
 
-            if(e.button.x >= image1->w && e.button.x < image1->w + image2->w) {
+            else if(e.button.x >= image1->w && e.button.x < image1->w + image2->w) {
                 if (state==FILL_LISTS) {
                     pushList(myList2, nbRows2, e.button.x % 400, e.button.y);
                 }
                 else if (state==TRANSFERT){
-                    myPoint2 << e.button.x % 400, e.button.y, 1;
-                    ++nbPointsTransfert;
-                    if (nbPointsTransfert==2) {
-                        solution = transfert(myPoint1, myPoint2, tensor);
+                    myPoints.row(1) << e.button.x % 400, e.button.y, 1;
+                    pointsTransfert.insert(2);
+                    unKnownImage.erase(2);
+                    if (pointsTransfert.size()==2) {
+                        solution = transfert(myPoints.row(*(pointsTransfert.begin())-1), myPoints.row(*(pointsTransfert.begin())-1), tensor, *(unKnownImage.begin()));
                         state = SOLUTION;
                     }
                 }
             }
 
-            if(e.button.x >= image1->w + image2->w) {
+            else if(e.button.x >= image1->w + image2->w) {
                 if (state==FILL_LISTS) {
                     pushList(myList3, nbRows3, e.button.x % 400, e.button.y);
                 }
                 else if (state==TRANSFERT) {
-                    myPoint3 << e.button.x % 400, e.button.y, 1;
-                    ++nbPointsTransfert;
-                    if (nbPointsTransfert==2) {
-                        solution = transfert(myPoint1, myPoint2, tensor);
+                    myPoints.row(2) << e.button.x % 400, e.button.y, 1;
+                    pointsTransfert.insert(3);
+                    unKnownImage.erase(3);
+                    if (pointsTransfert.size()==2) {
+                        solution = transfert(myPoints.row(*(pointsTransfert.begin())-1), myPoints.row(*(pointsTransfert.begin())-1), tensor, *(unKnownImage.begin()));
                         state = SOLUTION;
                     }
                 }
