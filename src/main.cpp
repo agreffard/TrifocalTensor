@@ -22,23 +22,198 @@ void pushList(MatrixXd &list, int &nbRows, int x, int y){
 	list(nbRows-1,2) = 1;
 }
 
+void printHelp(){
+	cout << endl << "------------- HELP --------------" << endl << endl;
+	cout << "--- options ---" << endl;
+	cout << "[-d] : load default point lists" << endl;
+	cout << "[-l] : load last saved point lists" << endl;
+	cout << "[file.list] | [file.mat] : load external point lists (previously saved)" << endl;
+	cout << "[file.jpg] | [file.png] | [file.gif] : load external images -- 3 exactly needed, or the program loads default images" << endl;
+	cout << endl;
+	cout << "--- runtime commands ---" << endl;
+	cout << "press s on the keyboard to save the current point lists (if not empty) in three files" << endl;
+	cout << endl;
+}
+
+
+/*************************/
+/*         MAIN          */
+/*************************/
 
 int main(int argc, char *argv[])
 {
-  // init SDL image
+  
+  // load the point lists
+  MatrixXf list1;
+  MatrixXf list2;
+  MatrixXf list3;
+  kn::loadMatrix(list1,"input/list1.list");
+  kn::loadMatrix(list2,"input/list2.list");
+  kn::loadMatrix(list3,"input/list3.list");
+
+  MatrixXd myList1(1,3); int nbRows1 = 0;
+  MatrixXd myList2(1,3); int nbRows2 = 0;
+  MatrixXd myList3(1,3); int nbRows3 = 0;
+
+	SDL_Surface * image1;
+	SDL_Surface * image2;
+	SDL_Surface * image3;
+
+/*******************/
+/*     OPTIONS     */
+/*******************/
+	uint8_t externalLists = 0;
+	uint8_t externalImages = 0;
+	
+	cout << endl;
+	
+  if(argc > 1){
+	  char** imagePath = new char*[argc];
+	  string* tabArguments = new string[argc];
+		
+		
+	  for(uint8_t i = 0; i < argc-1; ++i){
+			tabArguments[i] = argv[i+1];
+			imagePath[i] = argv[i+1];
+			
+			// help
+			size_t findHelp = tabArguments[i].find("-help");
+			if(findHelp != string::npos){
+				printHelp();
+				return(EXIT_SUCCESS);
+			}
+			
+			// load default
+			size_t findDefault = tabArguments[i].find("-d"); 	// defaults lists requested
+			if(findDefault != string::npos){
+				cout << "Try to load default lists" << endl;
+				
+				kn::loadMatrix(myList1,"input/list1.list"); nbRows1 = myList1.rows();
+				kn::loadMatrix(myList2,"input/list2.list"); nbRows2 = myList2.rows();
+				kn::loadMatrix(myList3,"input/list3.list"); nbRows3 = myList3.rows();
+				
+				cout << "Default lists loaded" << endl;
+			}
+			
+			// load last saved point lists
+			size_t findLast = tabArguments[i].find("-l"); 	// last saved point lists requested
+			if(findLast != string::npos){
+				cout << "Try to load last saved point lists" << endl;
+				
+				kn::loadMatrix(myList1,"myList1.list"); nbRows1 = myList1.rows();
+				kn::loadMatrix(myList2,"myList2.list"); nbRows2 = myList2.rows();
+				kn::loadMatrix(myList3,"myList3.list"); nbRows3 = myList3.rows();
+				
+				cout << "Last saved point lists loaded" << endl;
+			}
+			
+			// load external lists
+			size_t findList = tabArguments[i].find(".list"); 	// external lists requested
+			if(findList == string::npos){
+				findList = tabArguments[i].find(".mat");				// another extension
+			}
+			if(findList != string::npos){
+				cout << endl << "Try to load point list : " << tabArguments[i] << endl;
+				if(externalLists == 3){
+					cout << "Try to load too many lists !!" << endl;
+				}	
+				if(externalLists == 0){
+					kn::loadMatrix(myList1,tabArguments[i]);
+					nbRows1 = myList1.rows();
+				}
+				if(externalLists == 1){
+					kn::loadMatrix(myList2,tabArguments[i]);
+					nbRows2 = myList2.rows();
+				}
+				if(externalLists == 2){
+					kn::loadMatrix(myList3,tabArguments[i]);
+					nbRows3 = myList3.rows();
+				}
+				
+				if(externalLists < 3){
+					++externalLists;
+				}
+							
+			} // end external lists loading
+			
+			// load images
+			size_t findImages = tabArguments[i].find(".jpg");
+			if(findImages == string::npos){
+				findImages = tabArguments[i].find(".png");
+			}
+			if(findImages == string::npos){
+				findImages = tabArguments[i].find(".gif");
+			}
+			if(findImages != string::npos){
+				cout << endl << "Try to load image : " << tabArguments[i] << endl;
+				if(externalImages == 3){
+					cout << "Try to load too many images !!" << endl;
+				}
+				if(externalImages == 0){
+					image1 = IMG_Load(imagePath[i]);
+					if(image1 == 0){
+						std::cerr << "error loading image" << std::endl;
+						return 0;
+					}
+				}
+				if(externalImages == 1){
+					image2 = IMG_Load(imagePath[i]);
+					if(image2 == 0){
+						std::cerr << "error loading image" << std::endl;
+						return 0;
+					}
+				}
+				if(externalImages == 2){
+					image3 = IMG_Load(imagePath[i]);
+					if(image3 == 0){
+						std::cerr << "error loading image" << std::endl;
+						return 0;
+					}
+				}
+				
+				if(externalImages < 3){
+					++externalImages;
+				}
+				
+			} // end image loading
+			
+		} // end args browsing
+		
+		delete[] tabArguments;
+		delete[] imagePath;
+  } // end OPTIONS
+
+	cout << endl;
+
+/***** END OPTIONS *****/
+
+
+/*******************/
+/*       SDL       */
+/*******************/
+
+	// init SDL image
   if(IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) == -1){
     std::cerr << "error IMG_Init" << std::endl;
     return EXIT_FAILURE;
   }
 
   // load some images
-  SDL_Surface *image1 = IMG_Load("input/image1.jpg");
-  SDL_Surface *image2 = IMG_Load("input/image2.jpg");
-  SDL_Surface *image3 = IMG_Load("input/image3.jpg");
-  if(image1 == 0 || image2 == 0 || image3 == 0){
-    std::cerr << "error loading images" << std::endl;
-    return 0;
-  }
+  
+  if(externalImages != 3){
+		if(externalImages == 0){
+			cout << "loading default images" << endl;
+		}else{
+			cout << "3 images exactly needed, loading default images" << endl;
+		}
+		image1 = IMG_Load("input/image1.jpg");
+		image2 = IMG_Load("input/image1.jpg");
+		image3 = IMG_Load("input/image1.jpg");
+		if(image1 == 0 || image2 == 0 || image3 == 0){
+			std::cerr << "error loading images" << std::endl;
+			return 0;
+		}
+	}
 
   // init screen surface
   if(SDL_Init(SDL_INIT_VIDEO) == -1){
@@ -60,22 +235,13 @@ int main(int argc, char *argv[])
   imageOffset.x = image1->w + image2->w;
   SDL_BlitSurface(image3, NULL, screen, &imageOffset);
 
-  // load the point lists
-  MatrixXf list1;
-  MatrixXf list2;
-  MatrixXf list3;
-  kn::loadMatrix(list1,"input/list1.list");
-  kn::loadMatrix(list2,"input/list2.list");
-  kn::loadMatrix(list3,"input/list3.list");
+/***** END SDL *****/
 
-
-
-
- /********************************************************************
+/********************************************************************
 
   First step : find the tensor from the three lists
 
-  *********************************************************************/
+*********************************************************************/
   Tensor tensor;
   fillTensor(tensor, list1, list2, list3);
   tensor.print();
@@ -88,22 +254,16 @@ int main(int argc, char *argv[])
 
   VectorXf solution = transfert(list1.row(0), list2.row(0), tensor);
   cout << endl << "solution : " << endl << solution << endl;
-
-
-  MatrixXd myList1(1,3); int nbRows1 = 0;
-  MatrixXd myList2(1,3); int nbRows2 = 0;
-  MatrixXd myList3(1,3); int nbRows3 = 0;
-
-  // save a list
-  kn::saveMatrix(list1,"/tmp/myList.mat");
-
+  
+  
+/*******************/
+/*     DISPLAY     */
+/*******************/
+  
   // some colors
   Uint32 red  = 0xffff0000;
   Uint32 blue = 0xff0000ff;
   Uint32 yellow = 0xffffff00;
-  
-  //~ kn::loadMatrix(myList1,"myList1.list");
-  //~ nbRows1 = myList1.rows(); // don't forget to update if a matrix is loaded
   
   bool done = false;
   while(!done){
@@ -181,7 +341,7 @@ int main(int argc, char *argv[])
 	  
   } // end display
   
-  
+/***** END DISPLAY *****/
 
 
 
