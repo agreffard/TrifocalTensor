@@ -12,8 +12,10 @@
 using namespace std;
 using namespace Eigen;
 
+enum State {FILL_LISTS, TRANSFERT, SOLUTION};
+State state;
 
-void pushList(MatrixXd &list, int &nbRows, int x, int y){
+void pushList(MatrixXf &list, int &nbRows, int x, int y){
 	list.conservativeResize(nbRows+1,3);
 	++nbRows;
 	  
@@ -43,21 +45,29 @@ void printHelp(){
 int main(int argc, char *argv[])
 {
   
-  // load the point lists
-  MatrixXf list1;
-  MatrixXf list2;
-  MatrixXf list3;
-  kn::loadMatrix(list1,"input/list1.list");
-  kn::loadMatrix(list2,"input/list2.list");
-  kn::loadMatrix(list3,"input/list3.list");
+    // load the point lists
+    MatrixXf list1;
+    MatrixXf list2;
+    MatrixXf list3;
+    kn::loadMatrix(list1,"input/list1.list");
+    kn::loadMatrix(list2,"input/list2.list");
+    kn::loadMatrix(list3,"input/list3.list");
 
-  MatrixXd myList1(1,3); int nbRows1 = 0;
-  MatrixXd myList2(1,3); int nbRows2 = 0;
-  MatrixXd myList3(1,3); int nbRows3 = 0;
+    MatrixXf myList1(1,3); int nbRows1 = 0;
+    MatrixXf myList2(1,3); int nbRows2 = 0;
+    MatrixXf myList3(1,3); int nbRows3 = 0;
 
-	SDL_Surface * image1;
-	SDL_Surface * image2;
-	SDL_Surface * image3;
+    VectorXf myPoint1 = VectorXf::Zero(3);
+    VectorXf myPoint2 = VectorXf::Zero(3);
+    VectorXf myPoint3 = VectorXf::Zero(3);
+    int nbPointsTransfert = 0;
+    VectorXf solution = VectorXf::Zero(3);
+
+    SDL_Surface * image1;
+    SDL_Surface * image2;
+    SDL_Surface * image3;
+
+    Tensor tensor;
 
 /*******************/
 /*     OPTIONS     */
@@ -192,82 +202,66 @@ int main(int argc, char *argv[])
 /*       SDL       */
 /*******************/
 
-	// init SDL image
-  if(IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) == -1){
-    std::cerr << "error IMG_Init" << std::endl;
-    return EXIT_FAILURE;
-  }
+    // init SDL image
+    if(IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) == -1){
+        std::cerr << "error IMG_Init" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-  // load some images
-  
-  if(externalImages != 3){
-		if(externalImages == 0){
-			cout << "loading default images" << endl;
-		}else{
-			cout << "3 images exactly needed, loading default images" << endl;
-		}
-		image1 = IMG_Load("input/image1.jpg");
-		image2 = IMG_Load("input/image1.jpg");
-		image3 = IMG_Load("input/image1.jpg");
-		if(image1 == 0 || image2 == 0 || image3 == 0){
-			std::cerr << "error loading images" << std::endl;
-			return 0;
-		}
-	}
+    // load some images
 
-  // init screen surface
-  if(SDL_Init(SDL_INIT_VIDEO) == -1){
-    std::cerr << "error SDL_Init" << std::endl;
-    return EXIT_FAILURE;
-  }
+    if(externalImages != 3){
+    	if(externalImages == 0){
+    		cout << "loading default images" << endl;
+    	}else{
+    		cout << "3 images exactly needed, loading default images" << endl;
+    	}
+    	image1 = IMG_Load("input/image1.jpg");
+    	image2 = IMG_Load("input/image2.jpg");
+    	image3 = IMG_Load("input/image3.jpg");
+    	if(image1 == 0 || image2 == 0 || image3 == 0){
+    		std::cerr << "error loading images" << std::endl;
+    		return 0;
+    	}
+    }
 
-  // create a screen surface that will include the 3 images
-  SDL_Surface *screen = SDL_SetVideoMode(image1->w + image2->w + image3->w, image1->h, 32, SDL_HWSURFACE);
-  SDL_WM_SetCaption("Trifocal Tensor by Aurelien & Cedric", NULL);
+    // init screen surface
+    if(SDL_Init(SDL_INIT_VIDEO) == -1){
+        std::cerr << "error SDL_Init" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-  // bibd the images on the surface  
-  SDL_Rect imageOffset;
-  imageOffset.x = 0;
-  imageOffset.y = 0;
-  SDL_BlitSurface(image1, NULL, screen, &imageOffset);
-  imageOffset.x = image1->w;
-  SDL_BlitSurface(image2, NULL, screen, &imageOffset);
-  imageOffset.x = image1->w + image2->w;
-  SDL_BlitSurface(image3, NULL, screen, &imageOffset);
+    // create a screen surface that will include the 3 images
+    SDL_Surface *screen = SDL_SetVideoMode(image1->w + image2->w + image3->w, image1->h, 32, SDL_HWSURFACE);
+    SDL_WM_SetCaption("Trifocal Tensor by Aurelien & Cedric", NULL);
+
+    // bibd the images on the surface  
+    SDL_Rect imageOffset;
+    imageOffset.x = 0;
+    imageOffset.y = 0;
+    SDL_BlitSurface(image1, NULL, screen, &imageOffset);
+    imageOffset.x = image1->w;
+    SDL_BlitSurface(image2, NULL, screen, &imageOffset);
+    imageOffset.x = image1->w + image2->w;
+    SDL_BlitSurface(image3, NULL, screen, &imageOffset);
 
 /***** END SDL *****/
 
-/********************************************************************
-
-  First step : find the tensor from the three lists
-
-*********************************************************************/
-  Tensor tensor;
-  fillTensor(tensor, list1, list2, list3);
-  tensor.print();
-
-/********************************************************************
-
-  Second step : transfert
-
-*********************************************************************/
-
-  VectorXf solution = transfert(list1.row(0), list2.row(0), tensor);
-  cout << endl << "solution : " << endl << solution << endl;
-  
   
 /*******************/
 /*     DISPLAY     */
 /*******************/
+
+
+// some colors
+Uint32 red  = 0xffff0000;
+Uint32 blue = 0xff0000ff;
+Uint32 yellow = 0xffffff00;
+
+bool done = false;
+while(!done){
   
-  // some colors
-  Uint32 red  = 0xffff0000;
-  Uint32 blue = 0xff0000ff;
-  Uint32 yellow = 0xffffff00;
-  
-  bool done = false;
-  while(!done){
-	  
+    if (state==FILL_LISTS) {
 	  // draw points on image1
 	  if(nbRows1 != 0){
 		for(int i=0; i<myList1.rows(); ++i)
@@ -285,63 +279,119 @@ int main(int argc, char *argv[])
 		for(int i=0; i<myList3.rows(); ++i)
 			fill_circle(screen, myList3(i,0)+image1->w+image2->w, myList3(i,1), 3, yellow);
 	  }
+    }
+    else if (state == TRANSFERT) {
+        if (myPoint1(2)!=0) {
+            fill_circle(screen, myPoint1(0), myPoint1(1), 3, red);
+        }
+        if (myPoint2(2)!=0) {
+            fill_circle(screen, myPoint2(0)+image1->w, myPoint2(1), 3, blue);
+        }
+        if (myPoint3(2)!=0) {
+            fill_circle(screen, myPoint3(0)+image1->w+image2->w, myPoint2(1), 3, yellow);
+        }
+    }
+    else if (state == SOLUTION) {
+        fill_circle(screen, solution(0), solution(1)+image1->w+image2->w, 3, red);
+    }
 
-	  // display everything
-	  SDL_Flip(screen);
-	  //~ pause();
-	  
-	  SDL_Event e;
-	  while(SDL_PollEvent(&e)) {
-		  if(e.type == SDL_QUIT){
-			  done = true;
-			  break;
-		  }
-		  
-		  if(e.type == SDL_KEYUP){
-			  if(e.key.keysym.sym == SDLK_ESCAPE){
-				  done = true;
-				  break;
-			  }
-			  if(e.key.keysym.sym == SDLK_SPACE){
-				  cout << endl;
-				  cout << "list1" << endl;
-				  cout << myList1 << endl;
-				  cout << endl;
-				  cout << "list2" << endl;
-				  cout << myList2 << endl;
-				  cout << endl;
-				  cout << "list3" << endl;
-				  cout << myList3 << endl;
-			  }
-			  if(e.key.keysym.sym == SDLK_s){
-				  if(nbRows1 != 0){
-					  kn::saveMatrix(myList1, "myList1.list");
-				  }
-				  if(nbRows2 != 0){
-					  kn::saveMatrix(myList2, "myList2.list");
-				  }
-				  if(nbRows3 != 0){
-					  kn::saveMatrix(myList3, "myList3.list");
-				  }
-			  }
-		  } // end SDL_KEYUP
-		  
-		  if(e.type == SDL_MOUSEBUTTONUP){
-			  if(e.button.x < image1->w)
-				pushList(myList1, nbRows1, e.button.x % 400, e.button.y);
-				
-			  if(e.button.x >= image1->w && e.button.x < image1->w + image2->w)
-				pushList(myList2, nbRows2, e.button.x % 400, e.button.y);
-				
-			  if(e.button.x >= image1->w + image2->w)
-				pushList(myList3, nbRows3, e.button.x % 400, e.button.y);
-		  } // end SDL_MOUSEBUTTONUP
-		  
-	  } // end events
-	  
-  } // end display
+    // display everything
+    SDL_Flip(screen);
+    //~ pause();
   
-/***** END DISPLAY *****/
+    SDL_Event e;
+    while(SDL_PollEvent(&e)) {
+        if(e.type == SDL_QUIT){
+            done = true;
+            break;
+        }
+
+        if(e.type == SDL_KEYUP){
+            if(e.key.keysym.sym == SDLK_ESCAPE){
+                done = true;
+                break;
+            }
+            if(e.key.keysym.sym == SDLK_SPACE){
+                cout << endl;
+                cout << "list1" << endl;
+                cout << myList1 << endl;
+                cout << endl;
+                cout << "list2" << endl;
+                cout << myList2 << endl;
+                cout << endl;
+                cout << "list3" << endl;
+                cout << myList3 << endl;
+            }
+            if(e.key.keysym.sym == SDLK_s){
+                cout << "writing lists..." << endl;
+                if(nbRows1 != 0){
+                    kn::saveMatrix(myList1, "myList1.list");
+                }
+                if(nbRows2 != 0){
+                    kn::saveMatrix(myList2, "myList2.list");
+                }
+                if(nbRows3 != 0){
+                    kn::saveMatrix(myList3, "myList3.list");
+                }
+                cout << "lists written" << endl;
+            }
+            if(e.key.keysym.sym == SDLK_RETURN){
+                cout << endl << "Calculation Tensor" << endl;
+                fillTensor(tensor, myList1, myList2, myList3);
+                tensor.print();
+                state = TRANSFERT;
+            }
+        } // end SDL_KEYUP
+
+        if(e.type == SDL_MOUSEBUTTONUP){
+            if(e.button.x < image1->w) {
+                if (state==FILL_LISTS) {
+                    pushList(myList1, nbRows1, e.button.x % 400, e.button.y);
+                }
+                else if (state==TRANSFERT) {
+                    myPoint1 << e.button.x % 400, e.button.y, 1;
+                    ++nbPointsTransfert;
+                    if (nbPointsTransfert==2) {
+                        solution = transfert(myPoint1, myPoint2, tensor);
+                        state = SOLUTION;
+                    }
+                }
+            }
+
+            if(e.button.x >= image1->w && e.button.x < image1->w + image2->w) {
+                if (state==FILL_LISTS) {
+                    pushList(myList2, nbRows2, e.button.x % 400, e.button.y);
+                }
+                else if (state==TRANSFERT){
+                    myPoint2 << e.button.x % 400, e.button.y, 1;
+                    ++nbPointsTransfert;
+                    if (nbPointsTransfert==2) {
+                        solution = transfert(myPoint1, myPoint2, tensor);
+                        state = SOLUTION;
+                    }
+                }
+            }
+
+            if(e.button.x >= image1->w + image2->w) {
+                if (state==FILL_LISTS) {
+                    pushList(myList3, nbRows3, e.button.x % 400, e.button.y);
+                }
+                else if (state==TRANSFERT) {
+                    myPoint3 << e.button.x % 400, e.button.y, 1;
+                    ++nbPointsTransfert;
+                    if (nbPointsTransfert==2) {
+                        solution = transfert(myPoint1, myPoint2, tensor);
+                        state = SOLUTION;
+                    }
+                }
+            }
+        } // end SDL_MOUSEBUTTONUP
+
+    } // end events
+
+} // end display
+
+        /***** END DISPLAY *****/
 
 
 
