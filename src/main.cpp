@@ -34,6 +34,7 @@ void printHelp(){
 	cout << "[file.jpg] | [file.png] | [file.gif] : load external images -- 3 exactly needed, or the program loads default images" << endl;
 	cout << endl;
 	cout << "--- runtime commands ---" << endl;
+	cout << "press ENTER to compute the tensor (if lists are correctly filled)" << endl;
 	cout << "press s on the keyboard to save the current point lists (if not empty) in three files" << endl;
 	cout << endl;
 }
@@ -118,11 +119,16 @@ int main(int argc, char *argv[])
 				kn::loadMatrix(myList3,"myList3.list"); nbRows3 = myList3.rows();
 				
 				cout << "Last saved point lists loaded" << endl;
-                cout << endl << "Calculation Tensor" << endl;
-                fillTensor(tensor, myList1, myList2, myList3);
-                tensor.print();
-                cout << "truc " << endl;
-                state = TRANSFERT;
+                cout << "number of points in list1 : " << nbRows1 << endl;
+                cout << "number of points in list2 : " << nbRows2 << endl;
+                cout << "number of points in list3 : " << nbRows3 << endl;
+                
+                if(nbRows1 < 7 || nbRows2 < 7 || nbRows3 < 7){
+					cout << "7 points at least needed in each list, you must complete them" << endl;
+				}else{
+					cout << "lists corectly filled, you can compute the tensor by pressing ENTER" << endl;
+				}
+                
 			}
 			
 			// load external lists
@@ -357,10 +363,18 @@ while(!done){
                 cout << "lists written" << endl;
             }
             if(e.key.keysym.sym == SDLK_RETURN){
-                cout << endl << "Calculation Tensor" << endl;
-                fillTensor(tensor, myList1, myList2, myList3);
-                tensor.print();
-                state = TRANSFERT;
+				if(nbRows1 < 7 || nbRows2 < 7 || nbRows3 < 7){
+					cout << endl << "Lists must be filled with at least 7 sets of matching points" << endl;
+				}else{
+					if(nbRows1 != nbRows2 || nbRows2 != nbRows3 || nbRows3 != nbRows1){
+						cout << endl << "Lists must have the same number of points" << endl;
+					}else{
+						cout << endl << "Calculating Tensor" << endl;
+						fillTensor(tensor, myList1, myList2, myList3);
+						tensor.print();
+						state = TRANSFERT;
+					}
+				}
             }
         } // end SDL_KEYUP
 
