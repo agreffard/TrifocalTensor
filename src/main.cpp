@@ -129,6 +129,12 @@ int main(int argc, char *argv[])
 					cout << "lists corectly filled, you can compute the tensor by pressing ENTER" << endl;
 				}
                 
+                /*
+                cout << endl << "Calculation Tensor" << endl;
+                fillTensor(tensor, myList1, myList2, myList3);
+                tensor.print();
+                state = TRANSFERT;
+                */
 			}
 			
 			// load external lists
@@ -230,9 +236,9 @@ int main(int argc, char *argv[])
     	}else{
     		cout << "3 images exactly needed, loading default images" << endl;
     	}
-    	image1 = IMG_Load("input/image1.jpg");
-    	image2 = IMG_Load("input/image2.jpg");
-    	image3 = IMG_Load("input/image3.jpg");
+    	image1 = IMG_Load("input/flechettes1.JPG");
+    	image2 = IMG_Load("input/flechettes2.JPG");
+    	image3 = IMG_Load("input/flechettes3.JPG");
     	if(image1 == 0 || image2 == 0 || image3 == 0){
     		std::cerr << "error loading images" << std::endl;
     		return 0;
@@ -393,11 +399,11 @@ while(!done){
 
             else if(e.button.x < image1->w) {
                 if (state==FILL_LISTS) {
-                    pushList(myList1, nbRows1, e.button.x % 400, e.button.y);
+                    pushList(myList1, nbRows1, e.button.x % image1->w, e.button.y);
                 }
                 else if (state==TRANSFERT) {
                     // we insert the correspounding coordinates for the first point
-                    myPoints.row(0) << e.button.x % 400, e.button.y, 1;
+                    myPoints.row(0) << e.button.x % image1->w, e.button.y, 1;
                     // we insert 1 in the known points and we remove 1 in the unkown images
                     pointsTransfert.insert(1);
                     unKnownImage.erase(1);
@@ -415,10 +421,10 @@ while(!done){
 
             else if(e.button.x >= image1->w && e.button.x < image1->w + image2->w) {
                 if (state==FILL_LISTS) {
-                    pushList(myList2, nbRows2, e.button.x % 400, e.button.y);
+                    pushList(myList2, nbRows2, e.button.x % image1->w, e.button.y);
                 }
                 else if (state==TRANSFERT){
-                    myPoints.row(1) << e.button.x % 400, e.button.y, 1;
+                    myPoints.row(1) << e.button.x % image1->w, e.button.y, 1;
                     pointsTransfert.insert(2);
                     unKnownImage.erase(2);
 
@@ -431,10 +437,10 @@ while(!done){
 
             else if(e.button.x >= image1->w + image2->w) {
                 if (state==FILL_LISTS) {
-                    pushList(myList3, nbRows3, e.button.x % 400, e.button.y);
+                    pushList(myList3, nbRows3, e.button.x % image1->w, e.button.y);
                 }
                 else if (state==TRANSFERT) {
-                    myPoints.row(2) << e.button.x % 400, e.button.y, 1;
+                    myPoints.row(2) << e.button.x % image1->w, e.button.y, 1;
                     pointsTransfert.insert(3);
                     unKnownImage.erase(3);
 

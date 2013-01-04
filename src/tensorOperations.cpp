@@ -35,7 +35,7 @@ void fillTensor(Tensor& tensor, MatrixXf& list1, MatrixXf& list2, MatrixXf& list
 }
 
 
-// Fonction doing the transfert and finding the correspounding point from the 2 others
+// Function doing the transfert and finding the correspounding point from the 2 others
 VectorXf transfert(VectorXf x1, VectorXf x2, Tensor tensor, int unknownImage) {
 
   MatrixXf MatB = MatrixXf::Zero(4, 2);
@@ -50,7 +50,7 @@ VectorXf transfert(VectorXf x1, VectorXf x2, Tensor tensor, int unknownImage) {
               case 1:
                 factor = x1(i) * x2(2) * tensor(2, l, k) - x1(2) * x2(2) * tensor(i, l, k) - x1(i) * x2(l) * tensor(2, 2, k) + x1(2) * x2(l) * tensor(i, 2, k);
                 if (k==2) {
-                  // Soustraction because Vecb goes on the other side of the equation
+                  // Substraction because Vecb goes on the other side of the equation
                   Vecb(2*i + l) -= factor;
                 }
                 else {
