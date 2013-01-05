@@ -28,6 +28,7 @@ void pushList(MatrixXf &list, int &nbRows, int x, int y){
 void printHelp(){
 	cout << endl << "------------- HELP --------------" << endl << endl;
 	cout << "--- options ---" << endl;
+	cout << "[-help] : display this help" << endl;
 	cout << "[-d] : load default point lists" << endl;
 	cout << "[-l] : load last saved point lists" << endl;
 	cout << "[file.list] | [file.mat] : load external point lists (previously saved)" << endl;
@@ -45,7 +46,6 @@ void printHelp(){
 
 int main(int argc, char *argv[])
 {
-  
     // load the point lists
     /*MatrixXf list1;
     MatrixXf list2;
@@ -107,6 +107,12 @@ int main(int argc, char *argv[])
 				kn::loadMatrix(myList3,"input/list3.list"); nbRows3 = myList3.rows();
 				
 				cout << "Default lists loaded" << endl;
+				
+				cout << endl << "Calculating Tensor" << endl;
+                fillTensor(tensor, myList1, myList2, myList3);
+                //~ tensor.print();
+                state = TRANSFERT;
+                cout << endl << "click two points to launch the transfer" << endl;
 			}
 			
 			// load last saved point lists
@@ -126,15 +132,14 @@ int main(int argc, char *argv[])
                 if(nbRows1 < 7 || nbRows2 < 7 || nbRows3 < 7){
 					cout << "7 points at least needed in each list, you must complete them" << endl;
 				}else{
-					cout << "lists corectly filled, you can compute the tensor by pressing ENTER" << endl;
+					cout << "lists correctly filled, you can compute the tensor by pressing ENTER" << endl;
 				}
                 
-                /*
-                cout << endl << "Calculation Tensor" << endl;
+                cout << endl << "Calculating Tensor" << endl;
                 fillTensor(tensor, myList1, myList2, myList3);
-                tensor.print();
+                //~ tensor.print();
                 state = TRANSFERT;
-                */
+                cout << endl << "click two points to launch the transfer" << endl;
 			}
 			
 			// load external lists
@@ -158,6 +163,20 @@ int main(int argc, char *argv[])
 				if(externalLists == 2){
 					kn::loadMatrix(myList3,tabArguments[i]);
 					nbRows3 = myList3.rows();
+					
+					if(nbRows1 < 7 || nbRows2 < 7 || nbRows3 < 7){
+						cout << endl << "Lists must be filled with at least 7 matching points sets" << endl;
+						cout << "List1 : " << nbRows1 << " points" << endl;
+						cout << "List2 : " << nbRows2 << " points" << endl;
+						cout << "List3 : " << nbRows3 << " points" << endl;
+					}else{
+						cout << endl << "Lists correctly filled" << endl;
+						cout << endl << "Calculating Tensor" << endl;
+						fillTensor(tensor, myList1, myList2, myList3);
+						//~ tensor.print();
+						state = TRANSFERT;
+						cout << endl << "click two points to launch the transfer" << endl;
+					}
 				}
 				
 				if(externalLists < 3){
@@ -169,10 +188,19 @@ int main(int argc, char *argv[])
 			// load images
 			size_t findImages = tabArguments[i].find(".jpg");
 			if(findImages == string::npos){
+				findImages = tabArguments[i].find(".JPG");
+			}
+			if(findImages == string::npos){
 				findImages = tabArguments[i].find(".png");
 			}
 			if(findImages == string::npos){
+				findImages = tabArguments[i].find(".PNG");
+			}
+			if(findImages == string::npos){
 				findImages = tabArguments[i].find(".gif");
+			}
+			if(findImages == string::npos){
+				findImages = tabArguments[i].find(".GIF");
 			}
 			if(findImages != string::npos){
 				cout << endl << "Try to load image : " << tabArguments[i] << endl;
@@ -184,6 +212,8 @@ int main(int argc, char *argv[])
 					if(image1 == 0){
 						std::cerr << "error loading image" << std::endl;
 						return 0;
+					}else{
+						cout << "loaded" << endl;
 					}
 				}
 				if(externalImages == 1){
@@ -191,6 +221,8 @@ int main(int argc, char *argv[])
 					if(image2 == 0){
 						std::cerr << "error loading image" << std::endl;
 						return 0;
+					}else{
+						cout << "loaded" << endl;
 					}
 				}
 				if(externalImages == 2){
@@ -198,6 +230,8 @@ int main(int argc, char *argv[])
 					if(image3 == 0){
 						std::cerr << "error loading image" << std::endl;
 						return 0;
+					}else{
+						cout << "loaded" << endl;
 					}
 				}
 				
@@ -211,6 +245,8 @@ int main(int argc, char *argv[])
 		
 		delete[] tabArguments;
 		delete[] imagePath;
+  }else{
+	cout << "--- Enter -help when launching the program to display the help ---" << endl;
   } // end OPTIONS
 
 	cout << endl;
@@ -236,9 +272,9 @@ int main(int argc, char *argv[])
     	}else{
     		cout << "3 images exactly needed, loading default images" << endl;
     	}
-    	image1 = IMG_Load("input/flechettes1.JPG");
-    	image2 = IMG_Load("input/flechettes2.JPG");
-    	image3 = IMG_Load("input/flechettes3.JPG");
+    	image1 = IMG_Load("input/image1.jpg");
+    	image2 = IMG_Load("input/image2.jpg");
+    	image3 = IMG_Load("input/image3.jpg");
     	if(image1 == 0 || image2 == 0 || image3 == 0){
     		std::cerr << "error loading images" << std::endl;
     		return 0;
@@ -277,6 +313,7 @@ int main(int argc, char *argv[])
 Uint32 red  = 0xffff0000;
 Uint32 blue = 0xff0000ff;
 Uint32 yellow = 0xffffff00;
+Uint32 green = 0xff00ff00;
 
 bool done = false;
 while(!done){
@@ -304,30 +341,30 @@ while(!done){
     else if (state == TRANSFERT) {
         SDL_WM_SetCaption("Trifocal Tensor by Aurelien & Cedric - TRANSFERT", NULL);
         if (myPoints(0, 2)!=0) {
-            fill_circle(screen, myPoints(0, 0), myPoints(0, 1), 3, red);
+            fill_circle(screen, myPoints(0, 0), myPoints(0, 1), 3, green);
         }
         if (myPoints(1, 2)!=0) {
-            fill_circle(screen, myPoints(1, 0)+image1->w, myPoints(1, 1), 3, red);
+            fill_circle(screen, myPoints(1, 0)+image1->w, myPoints(1, 1), 3, green);
         }
         if (myPoints(2, 2)!=0) {
-            fill_circle(screen, myPoints(2, 0)+image1->w+image2->w, myPoints(2, 1), 3, red);
+            fill_circle(screen, myPoints(2, 0)+image1->w+image2->w, myPoints(2, 1), 3, green);
         }
     }
     else if (state == SOLUTION) {
         SDL_WM_SetCaption("Trifocal Tensor by Aurelien & Cedric - SOLUTION", NULL);
         if (myPoints(0, 2)!=0) {
-            fill_circle(screen, myPoints(0, 0), myPoints(0, 1), 3, red);
+            fill_circle(screen, myPoints(0, 0), myPoints(0, 1), 3, green);
         }
         if (myPoints(1, 2)!=0) {
-            fill_circle(screen, myPoints(1, 0)+image1->w, myPoints(1, 1), 3, red);
+            fill_circle(screen, myPoints(1, 0)+image1->w, myPoints(1, 1), 3, green);
         }
         if (myPoints(2, 2)!=0) {
-            fill_circle(screen, myPoints(2, 0)+image1->w+image2->w, myPoints(2, 1), 3, red);
+            fill_circle(screen, myPoints(2, 0)+image1->w+image2->w, myPoints(2, 1), 3, green);
         }
         int numImage = *(unKnownImage.begin())-1;
         fill_circle(screen, solution(0) + image1->w * numImage, solution(1), 3, red);
     }
-
+	
     // display everything
     SDL_Flip(screen);
     //~ pause();
@@ -377,8 +414,9 @@ while(!done){
 					}else{
 						cout << endl << "Calculating Tensor" << endl;
 						fillTensor(tensor, myList1, myList2, myList3);
-						tensor.print();
+						//~ tensor.print();
 						state = TRANSFERT;
+						cout << endl << "click two points to launch the transfer" << endl;
 					}
 				}
             }
@@ -395,6 +433,7 @@ while(!done){
                 unKnownImage.insert(3);
                 solution = VectorXf::Zero(3);
                 state = TRANSFERT;
+                cout << endl << "click two points to launch the transfer" << endl;
             }
 
             else if(e.button.x < image1->w) {
@@ -415,6 +454,7 @@ while(!done){
                         // the unknown image is the only one wich remain in the unKnownImage set.
                         solution = transfert(myPoints.row(*(pointsTransfert.begin())-1), myPoints.row(*(pointsTransfert.rbegin())-1), tensor, *(unKnownImage.begin()));
                         state = SOLUTION;
+                        cout << endl << "click to go back to transfer mode" << endl;
                     }
                 }
             }
