@@ -199,10 +199,15 @@ to push, that's why we decided to save this number for a practical reason - also
 
 \subsection{Others}
 
-To perform the transfer, we have to save the two clicked points and their corresponding images.
-We define two sets : the firts for the points, in which we stock clicked points, the second initialized with
-the three images. When an image is clicked, it is removed from this set, and the one which remains
-is the image where the transfered point must be written.
+To perform the transfer, we have to know which image to find, and therefore wich images have been clicked. 
+In order to minimize the various cases of treatment, we use the std::set container, wich allows us to save points 
+in the correct order regardless of the order in which they were clicked.
+We define two sets : the first (called $pointsTransfert$) for the points, and the second (called $unknownImage$) for the images.
+$pointsTransfert$ is initializated to $NULL$ and $unknownImage$ to $(1, 2, 3)$ because at the beginning no point was clicked.
+
+When an image is clicked, its id is removed from the $unknownImage$ set and added in the $pointsTransfert$ set. 
+When $pointsTransfert$ contains 2 elements, then we can do the transfer because we are sure to have two different points in the right order. 
+The corresponding image (where the transfered point must be written) is the only one left in the $unknownImage$ container.
 \\
 
 \section{Algorithms}

@@ -37,7 +37,17 @@
  \item Not asked and not working (or not implemented) elements : none
 \end{itemize}
 
-Report written with LaTeX.
+Report written in LaTeX.
+
+\section*{Options list}
+
+\begin{description}
+ \item[-help] : displays the help
+ \item[-d] : load default point lists
+ \item[-l] : load last saved point lists
+ \item[file.list / .mat] : load external point lists
+ \item[file.jpg / .png / .gif] : load external images
+\end{description}
 
 
 \chapter{Analysis}
@@ -64,7 +74,7 @@ In the subject, i and l vary from 1 to 2, p from 1 to the number of match points
 matrices start from 0, we will have i and l varying from 0 to 1, k from 0 to 2 and p from 0 to the number of points -1.
 \\
 
-Coefficients we will insert in A will depend on coorinates of x, x’ et x” points. Now, these coordinates are saved in our matching points
+Coefficients we will insert in A will depend on coordinates of x, x’ et x” points. Now, these coordinates are saved in our matching points
  lists, which means in a matrix form. We have to be able to get them back too. For instance, if we consider that points of the first, 
 second and third image are respectively saved in matrices list1, list2 and list3, then k coordinates of the matching point p of the 
 first image is list1(p, k).
@@ -98,8 +108,7 @@ This way, still from equation (1), we get to the following pseudocode :
 \section{Transfer}
 
 
-Now that t is known, we want to find a point from the two others. The principle is the same : first rewrite the system as a matrix, and then
-then fill a matrix B.
+Now that t is known, we want to find a point from the two others. The principle is the same : first rewrite the system as a matrix, and then fill a matrix B.
 \\
 
 Before starting and calculating a 3 coordinates vector just like in the last step, it could be a good thing to notice that the 3\textsuperscript{rd} 
@@ -117,7 +126,7 @@ If we are looking for the point x’, then x’3 is equal to 1, which leads us t
 If we are looking for the point x”, then x”3 is equal to 1, which leads us to the following equation :
 \[x^{k}x'^{3}x''^{l}T^{i3}_{k} - x^{k}x'^{i}x''^{l}T^{33}_{k} = x^{k}x'^{3}T^{il}_{k} - x^{k}x'^{i}T^{3l}_{k}\]
 
-Finally, if we are looking for the point x, then x3 is equal to 1, which leads us to the following equation :
+Finally, if we are looking for the point x, then x3 is equal to 1, which leads us to the following equations :
 
 if k=3 :
 \[x'^{i}x''^{3}T^{3l}_{k} - x'^{3}x''^{3}T^{il}_{k} - x'^{i}x''^{l}T^{33}_{k} + x'^{3}x''^{l}T^{i3}_{k} = 0^{il}\]
@@ -190,8 +199,10 @@ to push, that's why we decided to save this number for a practical reason - also
 
 \subsection{Others}
 
-To perform the transfer, we have to save the two clicked points and their corresponding images.
-We define two sets : the firts for the points, in which we stock clicked points, the second initialized with
+To perform the transfer, we have to know wih the two clicked points and their corresponding images. In order to minimize the various cases of treatment, we use the std::set container, wich allows us to save points in the correct order regardless of the order in which they were clicked.
+We define two sets
+
+: the firts for the points, in which we stock clicked points, the second initialized with
 the three images. When an image is clicked, it is removed from this set, and the one which remains
 is the image where the transfered point must be written.
 \\
@@ -280,9 +291,8 @@ We will quote here this report :
   tion. Despite the seemingly harmless nature of this transformation,
   this is an essential step in the algorithm.
 \end{quotation}
-\\
 
 Another way to improve our program would be to set up a real errors manager. For the moment, the program just
-display an error message then crash if a problem appears.
+displays an error message then crashes if a problem appears.
 
 \end{document}

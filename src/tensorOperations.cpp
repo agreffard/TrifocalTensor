@@ -74,8 +74,8 @@ VectorXf transfert(VectorXf x1, VectorXf x2, Tensor tensor, int unknownImage) {
   JacobiSVD<MatrixXf> svdB(MatB, ComputeThinU | ComputeThinV);
   VectorXf solution2d = svdB.solve(Vecb);
 
-  VectorXf homogeneSolution(3);
-  homogeneSolution << solution2d(0), solution2d(1), 1;
+  VectorXf homogSolution(3);
+  homogSolution << solution2d(0), solution2d(1), 1;
 
-  return homogeneSolution;
+  return homogSolution;
 }
