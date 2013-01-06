@@ -39,6 +39,16 @@
 
 Report written in LaTeX.
 
+\section*{Options list}
+
+\begin{description}
+ \item[-help] : displays the help
+ \item[-d] : load default point lists
+ \item[-l] : load last saved point lists
+ \item[file.list / .mat] : load external point lists
+ \item[file.jpg / .png / .gif] : load external images
+\end{description}
+
 
 \chapter{Analysis}
 \section{Tensor calculation}
@@ -279,7 +289,6 @@ We will quote here this report :
   tion. Despite the seemingly harmless nature of this transformation,
   this is an essential step in the algorithm.
 \end{quotation}
-\\
 
 Another way to improve our program would be to set up a real errors manager. For the moment, the program just
 displays an error message then crashes if a problem appears.
