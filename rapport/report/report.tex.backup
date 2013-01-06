@@ -280,6 +280,9 @@ We will quote here this report :
   tion. Despite the seemingly harmless nature of this transformation,
   this is an essential step in the algorithm.
 \end{quotation}
+\\
 
+Another way to improve our program would be to set up a real errors manager. For the moment, the program just
+display an error message then crash if a problem appears.
 
 \end{document}
